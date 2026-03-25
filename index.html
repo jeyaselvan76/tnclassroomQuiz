@@ -5,35 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TNSED Quiz Portal</title>
     <style>
-        :root { --primary: #4A90E2; --success: #2ecc71; --error: #e74c3c; --bg: #f0f4f8; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
+        :root { --primary: #4A90E2; --success: #2ecc71; --error: #e74c3c; --bg: #f4f7f9; --card-bg: #ffffff; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; color: #2d3436; }
         #app { width: 95%; max-width: 500px; margin: 20px 0; }
         
-        /* Modern Card UI */
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); transition: 0.3s; }
+        .card { background: var(--card-bg); padding: 30px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); transition: all 0.3s ease; }
         .hidden { display: none; }
         
-        h2 { color: #2c3e50; margin-top: 0; font-size: 1.4rem; }
-        .progress-container { height: 6px; background: #e0e6ed; border-radius: 10px; margin-bottom: 25px; }
-        .progress-bar { height: 100%; background: var(--primary); width: 0%; border-radius: 10px; transition: 0.4s; }
+        h2 { margin-top: 0; font-size: 1.5rem; text-align: center; color: #2c3e50; }
+        .progress-container { height: 8px; background: #dfe6e9; border-radius: 10px; margin-bottom: 25px; overflow: hidden; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); width: 0%; border-radius: 10px; transition: 0.5s ease; }
 
-        /* Option Buttons */
-        .option-label { display: block; padding: 15px; margin-bottom: 12px; border: 2px solid #edf2f7; border-radius: 12px; cursor: pointer; transition: 0.2s; position: relative; }
-        .option-label:hover { border-color: var(--primary); background: #f8fbff; }
+        /* Question & Options */
+        .question-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; line-height: 1.4; }
+        .option-label { display: block; padding: 16px; margin-bottom: 12px; border: 2px solid #f1f2f6; border-radius: 15px; cursor: pointer; transition: 0.2s; position: relative; background: #fbfcfe; }
+        .option-label:hover { border-color: var(--primary); background: #f0f7ff; }
         input[type="radio"] { position: absolute; opacity: 0; }
-        input[type="radio"]:checked + span { color: var(--primary); font-weight: 600; }
-        .selected { border-color: var(--primary); background: #f0f7ff !important; }
+        .selected { border-color: var(--primary) !important; background: #eef7ff !important; box-shadow: 0 4px 12px rgba(74, 144, 226, 0.1); }
 
-        /* Navigation */
-        .controls { display: flex; justify-content: space-between; margin-top: 25px; gap: 10px; }
-        button { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 1rem; }
-        .btn-next { background: var(--primary); color: white; }
-        .btn-back { background: #edf2f7; color: #718096; }
-        .btn-submit { background: var(--success); color: white; }
+        /* Buttons */
+        .controls { display: flex; justify-content: space-between; margin-top: 30px; gap: 12px; }
+        button { flex: 1; padding: 15px; border: none; border-radius: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 1rem; }
+        .btn-next { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3); }
+        .btn-back { background: #f1f2f6; color: #636e72; }
+        .btn-submit { background: var(--success); color: white; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3); }
+        button:active { transform: scale(0.98); }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Result Styles */
-        .ans-row { padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #ddd; }
+        /* Spinner & Status */
+        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 30px; height: 30px; border-radius: 50%; border-left-color: var(--primary); animation: spin 1s linear infinite; display: inline-block; margin-bottom: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-view { text-align: center; padding: 40px; }
+
+        /* Result Key */
+        .ans-row { padding: 15px; border-radius: 12px; margin-bottom: 12px; border-left: 6px solid #dfe6e9; font-size: 0.95rem; }
         .correct-row { background: #f0fff4; border-color: var(--success); }
         .wrong-row { background: #fff5f5; border-color: var(--error); }
     </style>
@@ -42,9 +47,10 @@
 
 <div id="app">
     <div id="screen-login" class="card">
-        <h2>Enter Details</h2>
-        <input type="text" id="studentId" placeholder="EMIS ID / Name" style="width:90%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:20px;">
-        <button class="btn-next" onclick="startQuiz()">Start Quiz</button>
+        <h2>Quiz Portal</h2>
+        <p style="text-align:center; color:#636e72;">Please enter your ID to begin</p>
+        <input type="text" id="studentId" placeholder="EMIS ID / Name" style="width:100%; box-sizing:border-box; padding:15px; border:2px solid #eee; border-radius:12px; margin-bottom:20px; font-size:1rem;">
+        <button class="btn-next" onclick="startQuiz()">Get Questions</button>
     </div>
 
     <div id="screen-quiz" class="card hidden">
@@ -53,51 +59,69 @@
         <div class="controls">
             <button class="btn-back" id="prevBtn" onclick="move(-1)">Back</button>
             <button class="btn-next" id="nextBtn" onclick="move(1)">Next</button>
-            <button class="btn-submit hidden" id="previewBtn" onclick="showPreview()">Review</button>
+            <button class="btn-submit hidden" id="previewBtn" onclick="showPreview()">Final Review</button>
         </div>
     </div>
 
     <div id="screen-preview" class="card hidden">
-        <h2>Final Review</h2>
-        <div id="preview-list"></div>
-        <div class="controls">
-            <button class="btn-back" onclick="closePreview()">Edit Answers</button>
-            <button class="btn-submit" onclick="finalSubmit()">Finish & Submit</button>
+        <h2>Review Answers</h2>
+        <div id="preview-list" style="margin-bottom:20px;"></div>
+        
+        <div id="submit-actions">
+            <div class="controls">
+                <button class="btn-back" onclick="closePreview()">Edit</button>
+                <button class="btn-submit" onclick="finalSubmit()">Finish & Submit</button>
+            </div>
+        </div>
+
+        <div id="status-loading" class="hidden loading-view">
+            <div class="spinner"></div>
+            <p>Uploading scores to Google Sheets...</p>
         </div>
     </div>
 
     <div id="screen-results" class="card hidden">
         <h2 id="score-text"></h2>
         <div id="key-list"></div>
-        <button class="btn-back" onclick="location.reload()" style="margin-top:20px; width:100%;">Close</button>
+        <button class="btn-next" onclick="location.reload()" style="margin-top:20px; width:100%;">Take Another Test</button>
     </div>
 </div>
 
 <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbz6FhXjWf9LDwllB1jsqW_PtNZlG3PODhn35DLW6Hsqdfa3AaNcPxDijqlJ6skKt__p/exec";
+    // 1. SET YOUR APPS SCRIPT URL HERE
+    const API_URL = "https://script.google.com/macros/s/AKfycbx1_zY0Utn_rbLkPWUr88ONvSHLD0KdnbpCQjs3zBu2mnGxU6SBCzdJqBrqtpiIyKno/exec"; 
+    
     let quizData = [], userAnswers = [], currentIdx = 0;
 
     async function startQuiz() {
-        if(!document.getElementById('studentId').value) return alert("Enter ID");
-        document.getElementById('screen-login').innerHTML = "<h3>Loading Questions...</h3>";
+        const id = document.getElementById('studentId').value;
+        if(!id) return alert("Please enter your EMIS ID or Name");
         
-        const res = await fetch(API_URL);
-        quizData = await res.json();
-        userAnswers = new Array(quizData.length).fill(null);
+        document.getElementById('screen-login').innerHTML = `<div class="loading-view"><div class="spinner"></div><p>Fetching your questions...</p></div>`;
         
-        document.getElementById('screen-login').classList.add('hidden');
-        document.getElementById('screen-quiz').classList.remove('hidden');
-        renderQuestion();
+        try {
+            const res = await fetch(API_URL);
+            quizData = await res.json();
+            if(quizData.length === 0) throw new Error("No questions found for the active set.");
+            
+            userAnswers = new Array(quizData.length).fill(null);
+            document.getElementById('screen-login').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.remove('hidden');
+            renderQuestion();
+        } catch(e) {
+            alert("Connection Error: " + e.message);
+            location.reload();
+        }
     }
 
     function renderQuestion() {
         const q = quizData[currentIdx];
-        let html = `<h3>${q.question}</h3><div class="options">`;
+        let html = `<div class="question-title">Q${currentIdx+1}: ${q.question}</div><div class="options">`;
         q.options.forEach((opt, i) => {
             const isSel = userAnswers[currentIdx] === i ? 'selected' : '';
             html += `
                 <label class="option-label ${isSel}">
-                    <input type="radio" name="q" value="${i}" onclick="selectOpt(${i})" ${isSel?'checked':''}>
+                    <input type="radio" name="quizOpt" value="${i}" onclick="selectOpt(${i})" ${isSel?'checked':''}>
                     <span>${opt}</span>
                 </label>`;
         });
@@ -111,12 +135,13 @@
     }
 
     function move(step) {
+        if(step === 1 && userAnswers[currentIdx] === null) return alert("Please select an answer first.");
         currentIdx += step;
         renderQuestion();
     }
 
     function updateNav() {
-        document.getElementById('prevBtn').disabled = currentIdx === 0;
+        document.getElementById('prevBtn').style.visibility = currentIdx === 0 ? 'hidden' : 'visible';
         const isLast = currentIdx === quizData.length - 1;
         document.getElementById('nextBtn').classList.toggle('hidden', isLast);
         document.getElementById('previewBtn').classList.toggle('hidden', !isLast);
@@ -124,10 +149,14 @@
     }
 
     function showPreview() {
+        if(userAnswers[currentIdx] === null) return alert("Please select an answer first.");
         document.getElementById('screen-quiz').classList.add('hidden');
         document.getElementById('screen-preview').classList.remove('hidden');
+        
         document.getElementById('preview-list').innerHTML = quizData.map((q, i) => `
-            <p>Q${i+1}: ${userAnswers[i] !== null ? '✅ Answered' : '❌ Missed'}</p>
+            <div style="padding:10px; border-bottom:1px solid #eee;">
+                <strong>Q${i+1}:</strong> ${userAnswers[i] !== null ? '<span style="color:green">Answered</span>' : '<span style="color:red">Missed</span>'}
+            </div>
         `).join('');
     }
 
@@ -140,25 +169,38 @@
         let score = 0;
         quizData.forEach((q, i) => { if(userAnswers[i] == q.correct) score++; });
 
-        fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                user: document.getElementById('studentId').value,
-                score: score,
-                total: quizData.length
-            })
-        });
+        // Show Spinner
+        document.getElementById('submit-actions').classList.add('hidden');
+        document.getElementById('status-loading').classList.remove('hidden');
 
-        document.getElementById('screen-preview').classList.add('hidden');
-        document.getElementById('screen-results').classList.remove('hidden');
-        document.getElementById('score-text').innerText = `Your Score: ${score} / ${quizData.length}`;
-        
-        document.getElementById('key-list').innerHTML = quizData.map((q, i) => `
-            <div class="ans-row ${userAnswers[i] == q.correct ? 'correct-row' : 'wrong-row'}">
-                <strong>Q${i+1}: ${q.question}</strong><br>
-                Correct: ${q.options[q.correct]}
-            </div>
-        `).join('');
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    user: document.getElementById('studentId').value,
+                    score: score,
+                    total: quizData.length
+                })
+            });
+
+            if(!response.ok) throw new Error("Failed to save to Sheet.");
+
+            document.getElementById('screen-preview').classList.add('hidden');
+            document.getElementById('screen-results').classList.remove('hidden');
+            document.getElementById('score-text').innerText = `You Scored: ${score} / ${quizData.length}`;
+            
+            document.getElementById('key-list').innerHTML = quizData.map((q, i) => `
+                <div class="ans-row ${userAnswers[i] == q.correct ? 'correct-row' : 'wrong-row'}">
+                    <strong>Q${i+1}: ${q.question}</strong><br>
+                    Your Answer: ${q.options[userAnswers[i]] || 'Skipped'}<br>
+                    Correct: ${q.options[q.correct]}
+                </div>
+            `).join('');
+        } catch(e) {
+            alert("Submission error. Please check your internet.");
+            document.getElementById('submit-actions').classList.remove('hidden');
+            document.getElementById('status-loading').classList.add('hidden');
+        }
     }
 </script>
 </body>
