@@ -166,6 +166,7 @@
     }
 
     async function finalSubmit() {
+        alert("Attempting to send data to: " + API_URL);
         let score = 0;
         quizData.forEach((q, i) => { if(userAnswers[i] == q.correct) score++; });
 
@@ -183,6 +184,10 @@
                 })
             });
 
+            const resultText = await response.text();
+        alert("Server Response: " + resultText);
+
+        if(resultText === "Success") {
             if(!response.ok) throw new Error("Failed to save to Sheet.");
 
             document.getElementById('screen-preview').classList.add('hidden');
@@ -196,6 +201,7 @@
                     Correct: ${q.options[q.correct]}
                 </div>
             `).join('');
+        }
         } catch(e) {
             alert("Submission error. Please check your internet.");
             document.getElementById('submit-actions').classList.remove('hidden');
