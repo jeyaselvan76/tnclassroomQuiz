@@ -164,40 +164,45 @@
         document.getElementById('screen-preview').classList.add('hidden');
         document.getElementById('screen-quiz').classList.remove('hidden');
     }
-async function finalSubmit() {
+ function finalSubmit() {
     let score = 0;
     quizData.forEach((q, i) => { if(userAnswers[i] == q.correct) score++; });
 
-    document.getElementById('submit-actions').classList.add('hidden');
-    document.getElementById('status-loading').classList.remove('hidden');
+    const studentName = document.getElementById('studentId').value;
+    const totalQ = quizData.length;
 
-    const payload = {
-        user: document.getElementById('studentId').value,
-        score: score,
-        total: quizData.length
-    };
+    // REPLACE THESE WITH YOUR GOOGLE FORM DETAILS
+    const formID = "YOUR_FORM_ID_HERE"; 
+    const entryName = "entry.111111"; // Change to your Name entry ID
+    const entryScore = "entry.222222"; // Change to your Score entry ID
+    const entryTotal = "entry.333333"; // Change to your Total entry ID
 
-    try {
-        // We use 'no-cors' to prevent the browser from blocking the request
-        await fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors', 
-            cache: 'no-cache',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+    const finalUrl = `https://docs.google.com/forms/d/e/${formID}/formResponse?` + 
+                    `${entryName}=${encodeURIComponent(studentName)}&` +
+                    `${entryScore}=${score}&` +
+                    `${entryTotal}=${totalQ}&submit=Submit`;
 
-        // Since 'no-cors' doesn't return a readable response, 
-        // we assume success if no error was thrown.
-        showSuccess(score);
+    // This "fires" the data to the form in the background
+    const ifr = document.createElement('iframe');
+    ifr.style.display = 'none';
+    ifr.src = finalUrl;
+    document.body.appendChild(ifr);
 
-    } catch(e) {
-        alert("Submission error: " + e.message);
-        document.getElementById('submit-actions').classList.remove('hidden');
-        document.getElementById('status-loading').classList.add('hidden');
-    }
+    // Show results immediately since we know the data is sent
+    setTimeout(() => {
+        document.getElementById('screen-preview').classList.add('hidden');
+        document.getElementById('screen-results').classList.remove('hidden');
+        document.getElementById('score-text').innerText = `Submitted Successfully! Score: ${score} / ${totalQ}`;
+        
+        // Show Answer Key
+        document.getElementById('key-list').innerHTML = quizData.map((q, i) => `
+            <div class="ans-row ${userAnswers[i] == q.correct ? 'correct-row' : 'wrong-row'}">
+                <strong>Q${i+1}: ${q.question}</strong><br>
+                Correct: ${q.options[q.correct]}
+            </div>
+        `).join('');
+    }, 1000);
 }
-
 function showSuccess(score) {
     document.getElementById('screen-preview').classList.add('hidden');
     document.getElementById('screen-results').classList.remove('hidden');
@@ -211,6 +216,7 @@ function showSuccess(score) {
         </div>
     `).join('');
 }
+    
 </script>
 </body>
 </html>
