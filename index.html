@@ -164,50 +164,53 @@
         document.getElementById('screen-preview').classList.add('hidden');
         document.getElementById('screen-quiz').classList.remove('hidden');
     }
+async function finalSubmit() {
+    let score = 0;
+    quizData.forEach((q, i) => { if(userAnswers[i] == q.correct) score++; });
 
-    async function finalSubmit() {
-        alert("Attempting to send data to: " + API_URL);
-        let score = 0;
-        quizData.forEach((q, i) => { if(userAnswers[i] == q.correct) score++; });
+    document.getElementById('submit-actions').classList.add('hidden');
+    document.getElementById('status-loading').classList.remove('hidden');
 
-        // Show Spinner
-        document.getElementById('submit-actions').classList.add('hidden');
-        document.getElementById('status-loading').classList.remove('hidden');
+    const payload = {
+        user: document.getElementById('studentId').value,
+        score: score,
+        total: quizData.length
+    };
 
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    user: document.getElementById('studentId').value,
-                    score: score,
-                    total: quizData.length
-                })
-            });
+    try {
+        // We use 'no-cors' to prevent the browser from blocking the request
+        await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors', 
+            cache: 'no-cache',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-            const resultText = await response.text();
-        alert("Server Response: " + resultText);
+        // Since 'no-cors' doesn't return a readable response, 
+        // we assume success if no error was thrown.
+        showSuccess(score);
 
-        if(resultText === "Success") {
-            if(!response.ok) throw new Error("Failed to save to Sheet.");
-
-            document.getElementById('screen-preview').classList.add('hidden');
-            document.getElementById('screen-results').classList.remove('hidden');
-            document.getElementById('score-text').innerText = `You Scored: ${score} / ${quizData.length}`;
-            
-            document.getElementById('key-list').innerHTML = quizData.map((q, i) => `
-                <div class="ans-row ${userAnswers[i] == q.correct ? 'correct-row' : 'wrong-row'}">
-                    <strong>Q${i+1}: ${q.question}</strong><br>
-                    Your Answer: ${q.options[userAnswers[i]] || 'Skipped'}<br>
-                    Correct: ${q.options[q.correct]}
-                </div>
-            `).join('');
-        }
-        } catch(e) {
-            alert("Submission error. Please check your internet.");
-            document.getElementById('submit-actions').classList.remove('hidden');
-            document.getElementById('status-loading').classList.add('hidden');
-        }
+    } catch(e) {
+        alert("Submission error: " + e.message);
+        document.getElementById('submit-actions').classList.remove('hidden');
+        document.getElementById('status-loading').classList.add('hidden');
     }
+}
+
+function showSuccess(score) {
+    document.getElementById('screen-preview').classList.add('hidden');
+    document.getElementById('screen-results').classList.remove('hidden');
+    document.getElementById('score-text').innerText = `You Scored: ${score} / ${quizData.length}`;
+    
+    document.getElementById('key-list').innerHTML = quizData.map((q, i) => `
+        <div class="ans-row ${userAnswers[i] == q.correct ? 'correct-row' : 'wrong-row'}">
+            <strong>Q${i+1}: ${q.question}</strong><br>
+            Your Answer: ${q.options[userAnswers[i]] || 'Skipped'}<br>
+            Correct: ${q.options[q.correct]}
+        </div>
+    `).join('');
+}
 </script>
 </body>
 </html>
