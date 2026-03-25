@@ -164,44 +164,40 @@
         document.getElementById('screen-preview').classList.add('hidden');
         document.getElementById('screen-quiz').classList.remove('hidden');
     }
- function finalSubmit() {
+    function finalSubmit() {
     let score = 0;
     quizData.forEach((q, i) => { if(userAnswers[i] == q.correct) score++; });
 
     const studentName = document.getElementById('studentId').value;
     const totalQ = quizData.length;
 
-    // REPLACE THESE WITH YOUR GOOGLE FORM DETAILS
-    const formID = "YOUR_FORM_ID_HERE"; 
-    const entryName = "entry.111111"; // Change to your Name entry ID
-    const entryScore = "entry.222222"; // Change to your Score entry ID
-    const entryTotal = "entry.333333"; // Change to your Total entry ID
+    // 1. REPLACE WITH YOUR FORM DATA
+    const formID = "1XBruPuo5bEujdzYz3dKYUuVoZc4jYS-O9ldk_Dnzy3g"; // The long code in your Form URL
+    const nameField = "entry.820716144";      // Change to your Name Field ID
+    const scoreField = "entry.829783421";     // Change to your Score Field ID
+    const totalField = "entry.2044263023";     // Change to your Total Field ID
 
-    const finalUrl = `https://docs.google.com/forms/d/e/${formID}/formResponse?` + 
-                    `${entryName}=${encodeURIComponent(studentName)}&` +
-                    `${entryScore}=${score}&` +
-                    `${entryTotal}=${totalQ}&submit=Submit`;
+    // 2. Build the "Silent" URL
+    const submitUrl = `https://docs.google.com/forms/d/e/${formID}/formResponse?` + 
+                      `${nameField}=${encodeURIComponent(studentName)}&` +
+                      `${scoreField}=${score}&` +
+                      `${totalField}=${totalQ}&submit=Submit`;
 
-    // This "fires" the data to the form in the background
-    const ifr = document.createElement('iframe');
-    ifr.style.display = 'none';
-    ifr.src = finalUrl;
-    document.body.appendChild(ifr);
+    // 3. Send data using a hidden "Image Request" (Bypasses all CORS blocks)
+    const img = new Image();
+    img.src = submitUrl;
 
-    // Show results immediately since we know the data is sent
-    setTimeout(() => {
-        document.getElementById('screen-preview').classList.add('hidden');
-        document.getElementById('screen-results').classList.remove('hidden');
-        document.getElementById('score-text').innerText = `Submitted Successfully! Score: ${score} / ${totalQ}`;
-        
-        // Show Answer Key
-        document.getElementById('key-list').innerHTML = quizData.map((q, i) => `
-            <div class="ans-row ${userAnswers[i] == q.correct ? 'correct-row' : 'wrong-row'}">
-                <strong>Q${i+1}: ${q.question}</strong><br>
-                Correct: ${q.options[q.correct]}
-            </div>
-        `).join('');
-    }, 1000);
+    // 4. Show Success Screen Immediately (No more waiting for spinners!)
+    document.getElementById('screen-preview').classList.add('hidden');
+    document.getElementById('screen-results').classList.remove('hidden');
+    document.getElementById('score-text').innerText = `Submitted Successfully! Score: ${score} / ${totalQ}`;
+    
+    document.getElementById('key-list').innerHTML = quizData.map((q, i) => `
+        <div class="ans-row ${userAnswers[i] == q.correct ? 'correct-row' : 'wrong-row'}">
+            <strong>Q${i+1}: ${q.question}</strong><br>
+            Correct: ${q.options[q.correct]}
+        </div>
+    `).join('');
 }
 function showSuccess(score) {
     document.getElementById('screen-preview').classList.add('hidden');
