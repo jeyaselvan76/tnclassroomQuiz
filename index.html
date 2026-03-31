@@ -1,218 +1,153 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ta">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TNSED Quiz Portal</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
-        :root { --primary: #4A90E2; --success: #2ecc71; --error: #e74c3c; --bg: #f4f7f9; --card-bg: #ffffff; }
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; color: #2d3436; }
-        #app { width: 95%; max-width: 500px; margin: 20px 0; }
+        :root { --primary: #1a2639; --accent: #e67e22; --light-blue: #d1e1f0; }
+        body { background-color: var(--primary); color: white; font-family: 'Arial', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; }
+        .card { background: transparent; padding: 10px; }
+        h2 { text-align: center; color: var(--accent); }
         
-        .card { background: var(--card-bg); padding: 30px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); transition: all 0.3s ease; }
-        .hidden { display: none; }
+        /* Input Styling */
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: none; box-sizing: border-box; font-size: 1rem; }
         
-        h2 { margin-top: 0; font-size: 1.5rem; text-align: center; color: #2c3e50; }
-        .progress-container { height: 8px; background: #dfe6e9; border-radius: 10px; margin-bottom: 25px; overflow: hidden; }
-        .progress-bar { height: 100%; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); width: 0%; border-radius: 10px; transition: 0.5s ease; }
-
-        /* Question & Options */
-        .question-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; line-height: 1.4; }
-        .option-label { display: block; padding: 16px; margin-bottom: 12px; border: 2px solid #f1f2f6; border-radius: 15px; cursor: pointer; transition: 0.2s; position: relative; background: #fbfcfe; }
-        .option-label:hover { border-color: var(--primary); background: #f0f7ff; }
-        input[type="radio"] { position: absolute; opacity: 0; }
-        .selected { border-color: var(--primary) !important; background: #eef7ff !important; box-shadow: 0 4px 12px rgba(74, 144, 226, 0.1); }
-
+        /* Quiz Styling */
+        .q-text { font-size: 1.2rem; margin: 20px 0; line-height: 1.6; }
+        .option { background: var(--light-blue); color: #333; padding: 15px; border-radius: 30px; margin-bottom: 15px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; font-weight: 500; }
+        .option.selected { background: var(--accent); color: white; }
+        .opt-circle { background: var(--accent); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px; font-weight: bold; }
+        
         /* Buttons */
-        .controls { display: flex; justify-content: space-between; margin-top: 30px; gap: 12px; }
-        button { flex: 1; padding: 15px; border: none; border-radius: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 1rem; }
-        .btn-next { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3); }
-        .btn-back { background: #f1f2f6; color: #636e72; }
-        .btn-submit { background: var(--success); color: white; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3); }
-        button:active { transform: scale(0.98); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* Spinner & Status */
-        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 30px; height: 30px; border-radius: 50%; border-left-color: var(--primary); animation: spin 1s linear infinite; display: inline-block; margin-bottom: 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .loading-view { text-align: center; padding: 40px; }
-
-        /* Result Key */
-        .ans-row { padding: 15px; border-radius: 12px; margin-bottom: 12px; border-left: 6px solid #dfe6e9; font-size: 0.95rem; }
-        .correct-row { background: #f0fff4; border-color: var(--success); }
-        .wrong-row { background: #fff5f5; border-color: var(--error); }
+        .btn { background: var(--accent); color: white; border: none; width: 100%; padding: 15px; border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-secondary { background: #7f8c8d; }
+        
+        #preview-section, #quiz-section, #result-section { display: none; }
     </style>
 </head>
 <body>
 
-<div id="app">
-    <div id="screen-login" class="card">
-        <h2>Quiz Portal</h2>
-        <p style="text-align:center; color:#636e72;">Please enter your ID to begin</p>
-        <input type="text" id="studentId" placeholder="EMIS ID / Name" style="width:100%; box-sizing:border-box; padding:15px; border:2px solid #eee; border-radius:12px; margin-bottom:20px; font-size:1rem;">
-        <button class="btn-next" onclick="startQuiz()">Get Questions</button>
+<div class="container">
+    <div id="login-section" class="card">
+        <h2>TNSED Quiz</h2>
+        <input type="text" id="userName" placeholder="பெயர் (Name)">
+        <input type="tel" id="userMobile" placeholder="கைபேசி எண் (Mobile)">
+        <button class="btn" onclick="startQuiz()">தொடங்குக</button>
     </div>
 
-    <div id="screen-quiz" class="card hidden">
-        <div class="progress-container"><div class="progress-bar" id="progress"></div></div>
-        <div id="question-content"></div>
-        <div class="controls">
-            <button class="btn-back" id="prevBtn" onclick="move(-1)">Back</button>
-            <button class="btn-next" id="nextBtn" onclick="move(1)">Next</button>
-            <button class="btn-submit hidden" id="previewBtn" onclick="showPreview()">Final Review</button>
+    <div id="quiz-section" class="card">
+        <div style="display:flex; justify-content: space-between;">
+            <span id="q-count">வினா 1/1</span>
+            <span id="timer">03:00 min</span>
         </div>
+        <div class="q-text" id="question-display">Loading...</div>
+        <div id="options-display"></div>
+        <button class="btn" onclick="showPreview()">சமர்ப்பிக்க (Submit)</button>
     </div>
 
-    <div id="screen-preview" class="card hidden">
-        <h2>Review Answers</h2>
-        <div id="preview-list" style="margin-bottom:20px;"></div>
-        
-        <div id="submit-actions">
-            <div class="controls">
-                <button class="btn-back" onclick="closePreview()">Edit</button>
-                <button class="btn-submit" onclick="finalSubmit()">Finish & Submit</button>
-            </div>
-        </div>
-
-        <div id="status-loading" class="hidden loading-view">
-            <div class="spinner"></div>
-            <p>Uploading scores to Google Sheets...</p>
-        </div>
-    </div>
-
-    <div id="screen-results" class="card hidden">
-        <h2 id="score-text"></h2>
-        <div id="key-list"></div>
-        <button class="btn-next" onclick="location.reload()" style="margin-top:20px; width:100%;">Take Another Test</button>
+    <div id="preview-section" class="card">
+        <h2>சரிபார்க்கவும் (Preview)</h2>
+        <div id="preview-content" style="background: #2c3e50; padding: 15px; border-radius: 10px; margin-bottom: 20px;"></div>
+        <button class="btn" onclick="confirmAndSave()">உறுதிப்படுத்துக (Confirm)</button>
+        <button class="btn btn-secondary" onclick="backToEdit()">திருத்துக (Edit)</button>
     </div>
 </div>
 
-<script>
-    // 1. SET YOUR APPS SCRIPT URL HERE
-    const API_URL = "https://script.google.com/macros/s/AKfycbyGR3gNKEEw87xNUCMCFmmqQ_7v2NdGbqVY2RQAjenrMQt3EZj5U0qw3Z0cGfuOaz5N/exec"; 
-    
-    let quizData = [], userAnswers = [], currentIdx = 0;
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    async function startQuiz() {
-        const id = document.getElementById('studentId').value;
-        if(!id) return alert("Please enter your EMIS ID or Name");
-        
-        document.getElementById('screen-login').innerHTML = `<div class="loading-view"><div class="spinner"></div><p>Fetching your questions...</p></div>`;
-        
-        try {
-            const res = await fetch(API_URL);
-            quizData = await res.json();
-            if(quizData.length === 0) throw new Error("No questions found for the active set.");
-            
-            userAnswers = new Array(quizData.length).fill(null);
-            document.getElementById('screen-login').classList.add('hidden');
-            document.getElementById('screen-quiz').classList.remove('hidden');
-            renderQuestion();
-        } catch(e) {
-            alert("Connection Error: " + e.message);
-            location.reload();
-        }
-    }
+    // PASTE YOUR CONFIG HERE
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
 
-    function renderQuestion() {
-        const q = quizData[currentIdx];
-        let html = `<div class="question-title">Q${currentIdx+1}: ${q.question}</div><div class="options">`;
-        q.options.forEach((opt, i) => {
-            const isSel = userAnswers[currentIdx] === i ? 'selected' : '';
-            html += `
-                <label class="option-label ${isSel}">
-                    <input type="radio" name="quizOpt" value="${i}" onclick="selectOpt(${i})" ${isSel?'checked':''}>
-                    <span>${opt}</span>
-                </label>`;
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let questions = [];
+    let userAnswers = {};
+    let userName = "";
+    let userMobile = "";
+
+    // Fetch Questions from Firestore
+    async function fetchQuestions() {
+        const querySnapshot = await getDocs(collection(db, "questions"));
+        querySnapshot.forEach((doc) => {
+            questions.push({ id: doc.id, ...doc.data() });
         });
-        document.getElementById('question-content').innerHTML = html + `</div>`;
-        updateNav();
+        renderQuestion(0);
     }
 
-    function selectOpt(i) {
-        userAnswers[currentIdx] = i;
-        renderQuestion();
-    }
-
-    function move(step) {
-        if(step === 1 && userAnswers[currentIdx] === null) return alert("Please select an answer first.");
-        currentIdx += step;
-        renderQuestion();
-    }
-
-    function updateNav() {
-        document.getElementById('prevBtn').style.visibility = currentIdx === 0 ? 'hidden' : 'visible';
-        const isLast = currentIdx === quizData.length - 1;
-        document.getElementById('nextBtn').classList.toggle('hidden', isLast);
-        document.getElementById('previewBtn').classList.toggle('hidden', !isLast);
-        document.getElementById('progress').style.width = ((currentIdx + 1) / quizData.length * 100) + "%";
-    }
-
-    function showPreview() {
-        if(userAnswers[currentIdx] === null) return alert("Please select an answer first.");
-        document.getElementById('screen-quiz').classList.add('hidden');
-        document.getElementById('screen-preview').classList.remove('hidden');
+    window.startQuiz = function() {
+        userName = document.getElementById('userName').value;
+        userMobile = document.getElementById('userMobile').value;
+        if(!userName || !userMobile) return alert("விவரங்களை நிரப்பவும்");
         
-        document.getElementById('preview-list').innerHTML = quizData.map((q, i) => `
-            <div style="padding:10px; border-bottom:1px solid #eee;">
-                <strong>Q${i+1}:</strong> ${userAnswers[i] !== null ? '<span style="color:green">Answered</span>' : '<span style="color:red">Missed</span>'}
-            </div>
-        `).join('');
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('quiz-section').style.display = 'block';
+        fetchQuestions();
     }
 
-    function closePreview() {
-        document.getElementById('screen-preview').classList.add('hidden');
-        document.getElementById('screen-quiz').classList.remove('hidden');
+    function renderQuestion(index) {
+        const q = questions[index];
+        document.getElementById('question-display').innerHTML = q.q;
+        const optCont = document.getElementById('options-display');
+        optCont.innerHTML = "";
+        
+        q.options.forEach((opt, i) => {
+            const div = document.createElement('div');
+            div.className = `option ${userAnswers[q.id] === i ? 'selected' : ''}`;
+            div.innerHTML = `<div class="opt-circle">${String.fromCharCode(65+i)}</div> ${opt}`;
+            div.onclick = () => {
+                userAnswers[q.id] = i;
+                renderQuestion(index);
+            };
+            optCont.appendChild(div);
+        });
+        MathJax.typesetPromise();
     }
-    function finalSubmit() {
-    let score = 0;
-    quizData.forEach((q, i) => { if(userAnswers[i] == q.correct) score++; });
 
-    const studentName = document.getElementById('studentId').value;
-    const totalQ = quizData.length;
+    window.showPreview = function() {
+        document.getElementById('quiz-section').style.display = 'none';
+        document.getElementById('preview-section').style.display = 'block';
+        
+        let html = `<p><b>பெயர்:</b> ${userName}</p><p><b>கைபேசி:</b> ${userMobile}</p><hr>`;
+        questions.forEach((q, i) => {
+            const ans = userAnswers[q.id] !== undefined ? q.options[userAnswers[q.id]] : "Not Answered";
+            html += `<p>${i+1}. ${ans}</p>`;
+        });
+        document.getElementById('preview-content').innerHTML = html;
+        MathJax.typesetPromise();
+    }
 
-    // 1. REPLACE WITH YOUR FORM DATA
-    const formID = "1XBruPuo5bEujdzYz3dKYUuVoZc4jYS-O9ldk_Dnzy3g"; // The long code in your Form URL
-    const nameField = "entry.820716144";      // Change to your Name Field ID
-    const scoreField = "entry.829783421";     // Change to your Score Field ID
-    const totalField = "entry.2044263023";     // Change to your Total Field ID
+    window.confirmAndSave = async function() {
+        try {
+            await addDoc(collection(db, "submissions"), {
+                name: userName,
+                mobile: userMobile,
+                answers: userAnswers,
+                status: "pending",
+                timestamp: new Date()
+            });
+            alert("வெற்றிகரமாகச் சமர்ப்பிக்கப்பட்டது!");
+            location.reload();
+        } catch (e) { alert("Error: " + e); }
+    }
 
-    // 2. Build the "Silent" URL
-    const submitUrl = `https://docs.google.com/forms/d/e/${formID}/formResponse?` + 
-                      `${nameField}=${encodeURIComponent(studentName)}&` +
-                      `${scoreField}=${score}&` +
-                      `${totalField}=${totalQ}&submit=Submit`;
-
-    // 3. Send data using a hidden "Image Request" (Bypasses all CORS blocks)
-    const img = new Image();
-    img.src = submitUrl;
-
-    // 4. Show Success Screen Immediately (No more waiting for spinners!)
-    document.getElementById('screen-preview').classList.add('hidden');
-    document.getElementById('screen-results').classList.remove('hidden');
-    document.getElementById('score-text').innerText = `Submitted Successfully! Score: ${score} / ${totalQ}`;
-    
-    document.getElementById('key-list').innerHTML = quizData.map((q, i) => `
-        <div class="ans-row ${userAnswers[i] == q.correct ? 'correct-row' : 'wrong-row'}">
-            <strong>Q${i+1}: ${q.question}</strong><br>
-            Correct: ${q.options[q.correct]}
-        </div>
-    `).join('');
-}
-function showSuccess(score) {
-    document.getElementById('screen-preview').classList.add('hidden');
-    document.getElementById('screen-results').classList.remove('hidden');
-    document.getElementById('score-text').innerText = `You Scored: ${score} / ${quizData.length}`;
-    
-    document.getElementById('key-list').innerHTML = quizData.map((q, i) => `
-        <div class="ans-row ${userAnswers[i] == q.correct ? 'correct-row' : 'wrong-row'}">
-            <strong>Q${i+1}: ${q.question}</strong><br>
-            Your Answer: ${q.options[userAnswers[i]] || 'Skipped'}<br>
-            Correct: ${q.options[q.correct]}
-        </div>
-    `).join('');
-}
-    
+    window.backToEdit = () => {
+        document.getElementById('preview-section').style.display = 'none';
+        document.getElementById('quiz-section').style.display = 'block';
+    }
 </script>
 </body>
 </html>
