@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results - TNSED Quiz Portal</title>
+    <style>
+        :root { --primary: #1a2639; --accent: #e67e22; --light-blue: #d1e1f0; --success: #27ae60; --error: #e74c3c; }
+        body { background-color: var(--primary); color: white; font-family: 'Arial', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; }
+        .card { background: #2c3e50; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        h2 { text-align: center; color: var(--accent); margin-top: 0; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: none; box-sizing: border-box; font-size: 1rem; color: #333; }
+        .btn { background: var(--accent); color: white; border: none; width: 100%; padding: 15px; border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        #result-display { display: none; margin-top: 25px; border-top: 1px solid #555; padding-top: 20px; }
+        .score-big { font-size: 3rem; text-align: center; color: var(--success); margin: 10px 0; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; color: #ccc; }
+        .status-msg { text-align: center; margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>மதிப்பெண் சரிபார்ப்பு<br>(Check Result)</h2>
+        <input type="tel" id="searchMobile" placeholder="கைபேசி எண் (Mobile)">
+        <input type="text" id="searchTestCode" placeholder="தேர்வு குறியீடு (Test Code)">
+        <button class="btn" onclick="findResult()">முடிவைக் காண்க (View Result)</button>
+
+        <div id="result-display">
+            <div class="info-row"><span>பெயர்:</span> <b id="res-name" style="color:white"></b></div>
+            <div class="info-row"><span>தேர்வு:</span> <b id="res-code" style="color:white"></b></div>
+            <hr style="border: 0.5px solid #444">
+            <p style="text-align:center; margin-bottom:0;">உங்கள் மதிப்பெண் (Your Score):</p>
+            <div class="score-big" id="res-score">0 / 0</div>
+            <p id="res-time" style="text-align:center; font-size:0.8rem; color:#888;"></p>
+            <button class="btn" style="background:#34495e; margin-top:20px;" onclick="location.reload()">மீண்டும் தேடுக</button>
+        </div>
+        <p id="error-msg" class="status-msg" style="color:var(--error); display:none;"></p>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, limit, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // 1. YOUR REAL CONFIG
+    const firebaseConfig = {
+        apiKey: "AIzaSyCkeMB4EUzXVEzoGsO-gTiCsId50IdHfCA",
+        authDomain: "tnclassroom-quiz-portal.firebaseapp.com",
+        projectId: "tnclassroom-quiz-portal",
+        storageBucket: "tnclassroom-quiz-portal.firebasestorage.app",
+        messagingSenderId: "360434190743",
+        appId: "1:360434190743:web:e67eee55d43140cc4f9cd2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.findResult = async () => {
+        const mobile = document.getElementById('searchMobile').value.trim();
+        const code = document.getElementById('searchTestCode').value.trim().toUpperCase();
+        const errorEl = document.getElementById('error-msg');
+        const displayEl = document.getElementById('result-display');
+
+        if(!mobile || !code) return alert("விவரங்களை நிரப்பவும்");
+
+        errorEl.style.display = 'none';
+        displayEl.style.display = 'none';
+
+        try {
+            // Search submissions for this mobile AND test code
+            const subRef = collection(db, "submissions");
+            const q = query(subRef, where("mobile", "==", mobile), where("testCode", "==", code), limit(1));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                errorEl.innerText = "தகவல் காணப்படவில்லை. விவரங்களைச் சரிபார்க்கவும்.";
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            const data = querySnapshot.docs[0].data();
+            
+            // We need to count correct answers manually based on the submission
+            // Fetch the questions for this code to compare correct answers
+            const qRef = collection(db, "questions");
+            const qQuery = query(qRef, where("testCode", "==", code));
+            const qSnapshot = await getDocs(qQuery);
+            
+            let totalCorrect = 0;
+            let totalQuestions = qSnapshot.size;
+
+            qSnapshot.forEach((doc) => {
+                const questionData = doc.data();
+                const studentAnswer = data.answers[doc.id];
+                if (studentAnswer !== undefined && studentAnswer === questionData.correct) {
+                    totalCorrect++;
+                }
+            });
+
+            // Update UI
+            document.getElementById('res-name').innerText = data.name;
+            document.getElementById('res-code').innerText = data.testCode;
+            document.getElementById('res-score').innerText = `${totalCorrect} / ${totalQuestions}`;
+            document.getElementById('res-time').innerText = "சமர்ப்பிக்கப்பட்ட நேரம்: " + data.timestamp.toDate().toLocaleString();
+            
+            displayEl.style.display = 'block';
+
+        } catch (e) {
+            console.error(e);
+            alert("Error: " + e.message);
+        }
+    };
+</script>
+</body>
+</html>
