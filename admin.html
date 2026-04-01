@@ -38,11 +38,27 @@
     </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+   // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-    const firebaseConfig = { /* PASTE YOUR CONFIG HERE */ };
-    const app = initializeApp(firebaseConfig);
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCkeMB4EUzXVEzoGsO-gTiCsId50IdHfCA",
+  authDomain: "tnclassroom-quiz-portal.firebaseapp.com",
+  projectId: "tnclassroom-quiz-portal",
+  storageBucket: "tnclassroom-quiz-portal.firebasestorage.app",
+  messagingSenderId: "360434190743",
+  appId: "1:360434190743:web:e67eee55d43140cc4f9cd2",
+  measurementId: "G-1ZS8JJC803"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
     const db = getFirestore(app);
 
     // Set the active test code
