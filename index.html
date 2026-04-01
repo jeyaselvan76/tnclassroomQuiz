@@ -3,208 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TNSED Quiz Portal</title>
+    <title>TNSED Quiz Portal - Thanjavur</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
     <style>
-        :root { --primary: #1a2639; --accent: #e67e22; --light-blue: #d1e1f0; }
+        :root { --primary: #1a2639; --accent: #e67e22; --light-blue: #d1e1f0; --success: #27ae60; --dark-card: #2c3e50; }
         body { background-color: var(--primary); color: white; font-family: 'Arial', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 500px; }
         .card { background: transparent; padding: 10px; }
-        h2 { text-align: center; color: var(--accent); }
-        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: none; box-sizing: border-box; font-size: 1rem; color: #333; }
-        .q-text { font-size: 1.2rem; margin: 20px 0; line-height: 1.6; }
-        .option { background: var(--light-blue); color: #333; padding: 15px; border-radius: 30px; margin-bottom: 15px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; font-weight: 500; }
-        .option.selected { background: var(--accent); color: white; }
-        .opt-circle { background: var(--accent); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px; font-weight: bold; }
-        .btn { background: var(--accent); color: white; border: none; width: 100%; padding: 15px; border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-secondary { background: #7f8c8d; }
-        #preview-section, #quiz-section { display: none; }
+        h2 { text-align: center; color: var(--accent); margin-bottom: 25px; }
+        
+        /* Inputs */
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: none; box-sizing: border-box; font-size: 1rem; color: #333; outline: none; }
+        
+        /* Quiz Layout */
+        .q-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; color: var(--light-blue); }
+        .q-text { font-size: 1.25rem; margin: 20px 0; line-height: 1.6; min-height: 100px; border-left: 4px solid var(--accent); padding-left: 15px; }
+        
+        /* Options */
+        .option { background: var(--light-blue); color: #333; padding: 15px; border-radius: 30px; margin-bottom: 15px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; font-weight: 500; border: 2px solid transparent; }
+        .option:hover { background: #fff; }
+        .option.selected { background: var(--accent); color: white; border-color: white; }
+        .opt-circle { background: var(--accent); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px; font-weight: bold; flex-shrink: 0; }
+        
+        /* Buttons */
+        .btn { background: var(--accent); color: white; border: none; width: 100%; padding: 16px; border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 12px; transition: 0.3s; }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { background: #7f8c8d; cursor: not-allowed; }
+        .btn-secondary { background: #34495e; }
+        .nav-group { display: flex; gap: 10px; margin-top: 20px; }
 
-        /* Spinner Overlay */
-#loading-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 9999;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
+        /* Loading Spinner Overlay */
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { border: 5px solid rgba(255,255,255,0.1); border-top: 5px solid var(--accent); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-.spinner {
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top: 4px solid var(--accent);
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+        #quiz-section, #preview-section { display: none; }
     </style>
 </head>
 <body>
+
 <div id="loading-overlay">
     <div class="spinner"></div>
-    <p style="margin-top:10px;">சமர்ப்பிக்கப்படுகிறது... (Submitting...)</p>
+    <p id="loading-text" style="margin-top:15px; font-weight: bold;">செயலாக்கிகிறது... (Processing...)</p>
 </div>
+
 <div class="container">
     <div id="login-section" class="card">
-        <h2>TNSED Quiz</h2>
-        <input type="text" id="userName" placeholder="பெயர் (Name)">
+        <h2>TNSED Quiz Login</h2>
+        <input type="text" id="userName" placeholder="உங்கள் பெயர் (Full Name)">
         <input type="tel" id="userMobile" placeholder="கைபேசி எண் (Mobile)">
-        <button class="btn" onclick="startQuiz()">தொடங்குக</button>
+        <input type="text" id="testCode" placeholder="தேர்வு குறியீடு (Test Code)">
+        <button class="btn" onclick="startQuiz()">தொடங்குக (Start Quiz)</button>
     </div>
 
     <div id="quiz-section" class="card">
-        <div style="display:flex; justify-content: space-between;">
-            <span id="q-count">வினா</span>
-            <span id="timer">03:00 min</span>
+        <div class="q-header">
+            <span id="q-count">வினா 0/0</span>
+            <span>Code: <span id="display-test-code" style="color:var(--accent);">--</span></span>
         </div>
-        <div class="q-text" id="question-display">Loading questions...</div>
+        <div class="q-text" id="question-display">வினாக்கள் தயாராகிறது...</div>
         <div id="options-display"></div>
-        <button class="btn" onclick="showPreview()">சமர்ப்பிக்க (Submit)</button>
+        
+        <div class="nav-group">
+            <button class="btn btn-secondary" id="prev-btn" onclick="changeQuestion(-1)" style="display:none;">முந்தைய (Prev)</button>
+            <button class="btn" id="next-btn" onclick="changeQuestion(1)">அடுத்தது (Next)</button>
+        </div>
+        <button class="btn" id="final-submit-btn" onclick="showPreview()" style="display:none; background-color: var(--success);">சரிபார்க்க (Review & Submit)</button>
     </div>
 
     <div id="preview-section" class="card">
-        <h2>சரிபார்க்கவும் (Preview)</h2>
-        <div id="preview-content" style="background: #2c3e50; padding: 15px; border-radius: 10px; margin-bottom: 20px;"></div>
-        <button class="btn" onclick="confirmAndSave()">உறுதிப்படுத்துக (Confirm)</button>
-        <button class="btn btn-secondary" onclick="backToEdit()">திருத்துக (Edit)</button>
+        <h2>விடை சரிபார்ப்பு (Review)</h2>
+        <div id="preview-content" style="background: var(--dark-card); padding: 20px; border-radius: 12px; margin-bottom: 20px; max-height: 400px; overflow-y: auto;"></div>
+        <button class="btn" id="confirm-save-btn" onclick="confirmAndSave()" style="background-color: var(--success);">உறுதிப்படுத்துக (Final Confirm)</button>
+        <button class="btn btn-secondary" onclick="backToEdit()">திருத்துக (Go Back & Edit)</button>
     </div>
 </div>
 
 <script type="module">
-    // 1. ADDED MISSING IMPORTS (Firestore functions)
+    // Import Firebase logic using the web CDN
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // Replace with your real Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyCkeMB4EUzXVEzoGsO-gTiCsId50IdHfCA",
         authDomain: "tnclassroom-quiz-portal.firebaseapp.com",
         projectId: "tnclassroom-quiz-portal",
         storageBucket: "tnclassroom-quiz-portal.firebasestorage.app",
         messagingSenderId: "360434190743",
-        appId: "1:360434190743:web:e67eee55d43140cc4f9cd2",
-        measurementId: "G-1ZS8JJC803"
+        appId: "1:360434190743:web:e67eee55d43140cc4f9cd2"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     let questions = [];
-    let userAnswers = {};
-    let userName = "";
-    let userMobile = "";
+    let userAnswers = {}; // Format: { questionId: optionIndex }
+    let currentIndex = 0;
+    let userName, userMobile, currentTestCode;
 
-    // FETCH DATA
-    async function fetchQuestions() {
+    const overlay = document.getElementById('loading-overlay');
+
+    // FETCH DATA BASED ON TEST CODE
+    async function fetchQuestions(code) {
+        overlay.style.display = 'flex';
         try {
-            const querySnapshot = await getDocs(collection(db, "questions"));
+            const qRef = collection(db, "questions");
+            const qFilter = query(qRef, where("testCode", "==", code));
+            const querySnapshot = await getDocs(qFilter);
+            
             questions = [];
             querySnapshot.forEach((doc) => {
                 questions.push({ id: doc.id, ...doc.data() });
             });
 
             if (questions.length > 0) {
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('quiz-section').style.display = 'block';
+                document.getElementById('display-test-code').innerText = code;
                 renderQuestion(0);
             } else {
-                document.getElementById('question-display').innerText = "No questions found.";
+                alert("தவறான தேர்வு குறியீடு! (Invalid Test Code)");
+                location.reload();
             }
         } catch (error) {
-            console.error("Firestore Error:", error);
-            alert("Error loading questions. Check your Firestore rules.");
+            console.error("Firebase Error:", error);
+            alert("Error fetching data. Check Console.");
+        } finally {
+            overlay.style.display = 'none';
         }
     }
 
-    // RENDER LOGIC
+    // RENDER THE QUESTION
     function renderQuestion(index) {
-        if (!questions[index]) return;
+        currentIndex = index;
         const q = questions[index];
         
+        // Update Counter
         document.getElementById('q-count').innerText = `வினா ${index + 1}/${questions.length}`;
+        
+        // Update Question Text
         document.getElementById('question-display').innerHTML = q.q;
         
+        // Update Options
         const optCont = document.getElementById('options-display');
         optCont.innerHTML = "";
         
         q.options.forEach((opt, i) => {
             const div = document.createElement('div');
             div.className = `option ${userAnswers[q.id] === i ? 'selected' : ''}`;
-            div.innerHTML = `<div class="opt-circle">${String.fromCharCode(65+i)}</div> ${opt}`;
+            div.innerHTML = `<div class="opt-circle">${String.fromCharCode(65+i)}</div> <span>${opt}</span>`;
             div.onclick = () => {
                 userAnswers[q.id] = i;
                 renderQuestion(index);
             };
             optCont.appendChild(div);
         });
+
+        // Toggle Navigation Buttons
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('final-submit-btn');
+
+        prevBtn.style.display = index === 0 ? 'none' : 'block';
         
+        if (index === questions.length - 1) {
+            nextBtn.style.display = 'none';
+            submitBtn.style.display = 'block';
+        } else {
+            nextBtn.style.display = 'block';
+            submitBtn.style.display = 'none';
+        }
+
+        // Render any math formulas
         if (window.MathJax) MathJax.typesetPromise();
     }
 
-    // GLOBAL FUNCTIONS
-    window.startQuiz = function() {
-        userName = document.getElementById('userName').value;
-        userMobile = document.getElementById('userMobile').value;
-        if(!userName || !userMobile) return alert("விவரங்களை நிரப்பவும்");
-        
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('quiz-section').style.display = 'block';
-        fetchQuestions();
+    // BUTTON FUNCTIONS (Linked to window for global access)
+    window.startQuiz = () => {
+        userName = document.getElementById('userName').value.trim();
+        userMobile = document.getElementById('userMobile').value.trim();
+        currentTestCode = document.getElementById('testCode').value.trim().toUpperCase();
+
+        if(!userName || !userMobile || !currentTestCode) {
+            return alert("தயவுசெய்து அனைத்து விவரங்களையும் நிரப்பவும்");
+        }
+        fetchQuestions(currentTestCode);
     };
 
-    window.showPreview = function() {
+    window.changeQuestion = (step) => {
+        currentIndex += step;
+        renderQuestion(currentIndex);
+    };
+
+    window.showPreview = () => {
         document.getElementById('quiz-section').style.display = 'none';
         document.getElementById('preview-section').style.display = 'block';
         
-        let html = `<p><b>பெயர்:</b> ${userName}</p><p><b>கைபேசி:</b> ${userMobile}</p><hr>`;
+        let html = `<p><b>பெயர்:</b> ${userName}</p><p><b>தேர்வு குறியீடு:</b> ${currentTestCode}</p><hr>`;
         questions.forEach((q, i) => {
-            const optIndex = userAnswers[q.id];
-            const ans = optIndex !== undefined ? q.options[optIndex] : "Not Answered";
-            html += `<p>${i+1}. ${ans}</p>`;
+            const selectedIdx = userAnswers[q.id];
+            const ansText = selectedIdx !== undefined ? q.options[selectedIdx] : "<span style='color:#e74c3c;'>விடையளிக்கப்படவில்லை (Not Answered)</span>";
+            html += `<p style='margin-bottom:10px;'><b>${i+1}.</b> ${ansText}</p>`;
         });
         document.getElementById('preview-content').innerHTML = html;
         if (window.MathJax) MathJax.typesetPromise();
     };
-window.confirmAndSave = async function() {
-    const overlay = document.getElementById('loading-overlay');
-    const confirmBtn = event.target; // Gets the button that was clicked
 
-    try {
-        // 1. Show the spin wheel and disable the button
-        overlay.style.display = 'flex';
+    window.confirmAndSave = async function() {
+        const confirmBtn = document.getElementById('confirm-save-btn');
         confirmBtn.disabled = true;
-        confirmBtn.innerText = "Processing...";
+        overlay.style.display = 'flex';
+        document.getElementById('loading-text').innerText = "சமர்ப்பிக்கப்படுகிறது (Submitting)...";
 
-        // 2. Save to Firestore
-        await addDoc(collection(db, "submissions"), {
-            name: userName,
-            mobile: userMobile,
-            answers: userAnswers,
-            status: "pending",
-            timestamp: new Date()
-        });
-
-        // 3. Success!
-        alert("வெற்றிகரமாகச் சமர்ப்பிக்கப்பட்டது!");
-        location.reload();
-
-    } catch (e) {
-        // 4. If it fails, hide the spinner so they can try again
-        overlay.style.display = 'none';
-        confirmBtn.disabled = false;
-        confirmBtn.innerText = "உறுதிப்படுத்துக (Confirm)";
-        
-        console.error(e);
-        alert("சமர்ப்பிக்க முடியவில்லை: " + e.message);
-    }
-};
+        try {
+            await addDoc(collection(db, "submissions"), {
+                name: userName,
+                mobile: userMobile,
+                testCode: currentTestCode,
+                answers: userAnswers,
+                timestamp: new Date()
+            });
+            alert("வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது! நன்றி.");
+            location.reload();
+        } catch (e) {
+            alert("பிழை: " + e.message);
+            confirmBtn.disabled = false;
+            overlay.style.display = 'none';
+        }
+    };
 
     window.backToEdit = () => {
         document.getElementById('preview-section').style.display = 'none';
