@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8"><title>Admin - TNSED Quiz Control</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        .box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background: #1a2639; color: white; }
+        .btn { padding: 10px 20px; background: #e67e22; color: white; border: none; cursor: pointer; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>Control Panel</h2>
+        <input type="text" id="newCode" placeholder="Enter Test Code (e.g. UNIT1)">
+        <button class="btn" onclick="setActiveTest()">Set Active Test</button>
+        <p>Current Active Test: <b id="current-code-display">Loading...</b></p>
+    </div>
+
+    <div class="box">
+        <h2>Student Results</h2>
+        <button class="btn" style="background:#27ae60" onclick="loadResults()">Refresh Results</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Mobile</th>
+                    <th>Test Code</th>
+                    <th>Answers Given</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="results-table"></tbody>
+        </table>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { /* PASTE YOUR CONFIG HERE */ };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Set the active test code
+    window.setActiveTest = async () => {
+        const code = document.getElementById('newCode').value.toUpperCase();
+        if(!code) return;
+        await setDoc(doc(db, "settings", "current_test"), { code: code });
+        alert("Active test updated to: " + code);
+        location.reload();
+    };
+
+    // Load current active test
+    const snap = await getDoc(doc(db, "settings", "current_test"));
+    if(snap.exists()) document.getElementById('current-code-display').innerText = snap.data().code;
+
+    // Load results from 'submissions'
+    window.loadResults = async () => {
+        const q = query(collection(db, "submissions"), orderBy("timestamp", "desc"));
+        const querySnapshot = await getDocs(q);
+        const table = document.getElementById('results-table');
+        table.innerHTML = "";
+        
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const row = `<tr>
+                <td>${data.name}</td>
+                <td>${data.mobile}</td>
+                <td>${data.testCode}</td>
+                <td>${Object.keys(data.answers || {}).length} Answered</td>
+                <td>${data.timestamp.toDate().toLocaleString()}</td>
+            </tr>`;
+            table.innerHTML += row;
+        });
+    };
+    loadResults();
+</script>
+</body>
+</html>
