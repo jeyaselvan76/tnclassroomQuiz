@@ -12,21 +12,14 @@
         .container { width: 100%; max-width: 500px; }
         .card { background: transparent; padding: 10px; }
         h2 { text-align: center; color: var(--accent); }
-        
-        /* Input Styling */
-        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: none; box-sizing: border-box; font-size: 1rem; }
-        
-        /* Quiz Styling */
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: none; box-sizing: border-box; font-size: 1rem; color: #333; }
         .q-text { font-size: 1.2rem; margin: 20px 0; line-height: 1.6; }
         .option { background: var(--light-blue); color: #333; padding: 15px; border-radius: 30px; margin-bottom: 15px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; font-weight: 500; }
         .option.selected { background: var(--accent); color: white; }
         .opt-circle { background: var(--accent); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px; font-weight: bold; }
-        
-        /* Buttons */
         .btn { background: var(--accent); color: white; border: none; width: 100%; padding: 15px; border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-secondary { background: #7f8c8d; }
-        
-        #preview-section, #quiz-section, #result-section { display: none; }
+        #preview-section, #quiz-section { display: none; }
     </style>
 </head>
 <body>
@@ -41,10 +34,10 @@
 
     <div id="quiz-section" class="card">
         <div style="display:flex; justify-content: space-between;">
-            <span id="q-count">வினா 1/1</span>
+            <span id="q-count">வினா</span>
             <span id="timer">03:00 min</span>
         </div>
-        <div class="q-text" id="question-display">Loading...</div>
+        <div class="q-text" id="question-display">Loading questions...</div>
         <div id="options-display"></div>
         <button class="btn" onclick="showPreview()">சமர்ப்பிக்க (Submit)</button>
     </div>
@@ -58,27 +51,21 @@
 </div>
 
 <script type="module">
-    // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+    // 1. ADDED MISSING IMPORTS (Firestore functions)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCkeMB4EUzXVEzoGsO-gTiCsId50IdHfCA",
-  authDomain: "tnclassroom-quiz-portal.firebaseapp.com",
-  projectId: "tnclassroom-quiz-portal",
-  storageBucket: "tnclassroom-quiz-portal.firebasestorage.app",
-  messagingSenderId: "360434190743",
-  appId: "1:360434190743:web:e67eee55d43140cc4f9cd2",
-  measurementId: "G-1ZS8JJC803"
-};
+    const firebaseConfig = {
+        apiKey: "AIzaSyCkeMB4EUzXVEzoGsO-gTiCsId50IdHfCA",
+        authDomain: "tnclassroom-quiz-portal.firebaseapp.com",
+        projectId: "tnclassroom-quiz-portal",
+        storageBucket: "tnclassroom-quiz-portal.firebasestorage.app",
+        messagingSenderId: "360434190743",
+        appId: "1:360434190743:web:e67eee55d43140cc4f9cd2",
+        measurementId: "G-1ZS8JJC803"
+    };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+    const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     let questions = [];
@@ -86,28 +73,34 @@ const analytics = getAnalytics(app);
     let userName = "";
     let userMobile = "";
 
-    // Fetch Questions from Firestore
+    // FETCH DATA
     async function fetchQuestions() {
-        const querySnapshot = await getDocs(collection(db, "questions"));
-        querySnapshot.forEach((doc) => {
-            questions.push({ id: doc.id, ...doc.data() });
-        });
-        renderQuestion(0);
+        try {
+            const querySnapshot = await getDocs(collection(db, "questions"));
+            questions = [];
+            querySnapshot.forEach((doc) => {
+                questions.push({ id: doc.id, ...doc.data() });
+            });
+
+            if (questions.length > 0) {
+                renderQuestion(0);
+            } else {
+                document.getElementById('question-display').innerText = "No questions found.";
+            }
+        } catch (error) {
+            console.error("Firestore Error:", error);
+            alert("Error loading questions. Check your Firestore rules.");
+        }
     }
 
-    window.startQuiz = function() {
-        userName = document.getElementById('userName').value;
-        userMobile = document.getElementById('userMobile').value;
-        if(!userName || !userMobile) return alert("விவரங்களை நிரப்பவும்");
-        
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('quiz-section').style.display = 'block';
-        fetchQuestions();
-    }
-
+    // RENDER LOGIC
     function renderQuestion(index) {
+        if (!questions[index]) return;
         const q = questions[index];
+        
+        document.getElementById('q-count').innerText = `வினா ${index + 1}/${questions.length}`;
         document.getElementById('question-display').innerHTML = q.q;
+        
         const optCont = document.getElementById('options-display');
         optCont.innerHTML = "";
         
@@ -121,8 +114,20 @@ const analytics = getAnalytics(app);
             };
             optCont.appendChild(div);
         });
-        MathJax.typesetPromise();
+        
+        if (window.MathJax) MathJax.typesetPromise();
     }
+
+    // GLOBAL FUNCTIONS
+    window.startQuiz = function() {
+        userName = document.getElementById('userName').value;
+        userMobile = document.getElementById('userMobile').value;
+        if(!userName || !userMobile) return alert("விவரங்களை நிரப்பவும்");
+        
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('quiz-section').style.display = 'block';
+        fetchQuestions();
+    };
 
     window.showPreview = function() {
         document.getElementById('quiz-section').style.display = 'none';
@@ -130,12 +135,13 @@ const analytics = getAnalytics(app);
         
         let html = `<p><b>பெயர்:</b> ${userName}</p><p><b>கைபேசி:</b> ${userMobile}</p><hr>`;
         questions.forEach((q, i) => {
-            const ans = userAnswers[q.id] !== undefined ? q.options[userAnswers[q.id]] : "Not Answered";
+            const optIndex = userAnswers[q.id];
+            const ans = optIndex !== undefined ? q.options[optIndex] : "Not Answered";
             html += `<p>${i+1}. ${ans}</p>`;
         });
         document.getElementById('preview-content').innerHTML = html;
-        MathJax.typesetPromise();
-    }
+        if (window.MathJax) MathJax.typesetPromise();
+    };
 
     window.confirmAndSave = async function() {
         try {
@@ -148,13 +154,16 @@ const analytics = getAnalytics(app);
             });
             alert("வெற்றிகரமாகச் சமர்ப்பிக்கப்பட்டது!");
             location.reload();
-        } catch (e) { alert("Error: " + e); }
-    }
+        } catch (e) { 
+            console.error(e);
+            alert("சமர்ப்பிக்க முடியவில்லை: " + e.message); 
+        }
+    };
 
     window.backToEdit = () => {
         document.getElementById('preview-section').style.display = 'none';
         document.getElementById('quiz-section').style.display = 'block';
-    }
+    };
 </script>
 </body>
 </html>
